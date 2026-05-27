@@ -6,8 +6,11 @@ ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # ── Add common tool paths without sourcing .zshrc (conda breaks set -e) ───────
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:$PATH"
 
-# ── Locate mvn ────────────────────────────────────────────────────────────────
-find_mvn() {
+# ── Locate mvn (prefer local wrapper, then system mvn) ────────────────────────
+MVNW="$ROOT_DIR/backend/mvnw"
+[ -x "$MVNW" ] && MVN="$MVNW" || MVN=""
+
+if [ -z "$MVN" ]; then
   for p in \
       "$(command -v mvn 2>/dev/null)" \
       /opt/homebrew/bin/mvn \
@@ -16,24 +19,15 @@ find_mvn() {
       "$HOME/.sdkman/candidates/maven/current/bin/mvn" \
       "$HOME/bin/mvn"
   do
-    [ -x "$p" ] && echo "$p" && return 0
+    [ -x "$p" ] && MVN="$p" && break
   done
-  return 1
-}
+fi
 
-MVN="$(find_mvn)" || {
-  echo ""
-  echo "❌ Maven (mvn) не найден."
-  echo ""
-  echo "   Установите одним из способов:"
-  echo "   • brew install maven          (рекомендуется, если есть Homebrew)"
-  echo "   • sdk install maven           (если есть sdkman)"
-  echo "   • https://maven.apache.org/download.cgi"
-  echo ""
-  echo "   После установки запустите снова: ./start-local.sh"
+if [ -z "$MVN" ]; then
+  echo "❌ Maven не найден даже через wrapper. Нужна Java для работы ./mvnw"
   exit 1
-}
-echo "✅ Maven: $MVN"
+fi
+echo "✅ Maven wrapper: $MVN"
 
 # ── Locate java ───────────────────────────────────────────────────────────────
 if ! command -v java &>/dev/null && [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
