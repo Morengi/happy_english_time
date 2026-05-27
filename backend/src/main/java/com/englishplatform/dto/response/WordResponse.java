@@ -2,11 +2,9 @@ package com.englishplatform.dto.response;
 
 import com.englishplatform.entity.Word;
 import com.englishplatform.entity.WordSourceType;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
 public class WordResponse {
     private Long id;
     private String englishWord;
@@ -17,6 +15,25 @@ public class WordResponse {
     private Long groupId;
     private String groupName;
     private LocalDateTime createdAt;
+
+    public Long getId() { return id; }
+    public void setId(Long v) { this.id = v; }
+    public String getEnglishWord() { return englishWord; }
+    public void setEnglishWord(String v) { this.englishWord = v; }
+    public String getRussianTranslation() { return russianTranslation; }
+    public void setRussianTranslation(String v) { this.russianTranslation = v; }
+    public WordSourceType getSourceType() { return sourceType; }
+    public void setSourceType(WordSourceType v) { this.sourceType = v; }
+    public Long getLessonId() { return lessonId; }
+    public void setLessonId(Long v) { this.lessonId = v; }
+    public String getLessonTitle() { return lessonTitle; }
+    public void setLessonTitle(String v) { this.lessonTitle = v; }
+    public Long getGroupId() { return groupId; }
+    public void setGroupId(Long v) { this.groupId = v; }
+    public String getGroupName() { return groupName; }
+    public void setGroupName(String v) { this.groupName = v; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }
 
     public static WordResponse from(Word word) {
         WordResponse r = new WordResponse();

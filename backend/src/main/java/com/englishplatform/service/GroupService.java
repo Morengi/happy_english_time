@@ -6,7 +6,6 @@ import com.englishplatform.entity.Group;
 import com.englishplatform.entity.Role;
 import com.englishplatform.entity.User;
 import com.englishplatform.repository.GroupRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,11 +13,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class GroupService {
 
     private final GroupRepository groupRepository;
     private final UserService userService;
+
+    public GroupService(GroupRepository groupRepository, UserService userService) {
+        this.groupRepository = groupRepository;
+        this.userService = userService;
+    }
 
     public Group getById(Long id) {
         return groupRepository.findById(id)

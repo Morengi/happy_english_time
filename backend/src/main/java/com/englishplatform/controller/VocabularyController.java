@@ -5,7 +5,6 @@ import com.englishplatform.dto.response.WordResponse;
 import com.englishplatform.entity.User;
 import com.englishplatform.service.VocabularyService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +13,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/vocabulary")
-@RequiredArgsConstructor
 public class VocabularyController {
 
     private final VocabularyService vocabularyService;
+
+    public VocabularyController(VocabularyService vocabularyService) {
+        this.vocabularyService = vocabularyService;
+    }
 
     @GetMapping
     public ResponseEntity<List<WordResponse>> getVocabulary(@AuthenticationPrincipal User user,

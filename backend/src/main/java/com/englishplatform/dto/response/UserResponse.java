@@ -2,11 +2,9 @@ package com.englishplatform.dto.response;
 
 import com.englishplatform.entity.Role;
 import com.englishplatform.entity.User;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
 public class UserResponse {
     private Long id;
     private String fullName;
@@ -14,6 +12,19 @@ public class UserResponse {
     private String email;
     private Role role;
     private LocalDateTime createdAt;
+
+    public Long getId() { return id; }
+    public void setId(Long v) { this.id = v; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String v) { this.fullName = v; }
+    public String getNickname() { return nickname; }
+    public void setNickname(String v) { this.nickname = v; }
+    public String getEmail() { return email; }
+    public void setEmail(String v) { this.email = v; }
+    public Role getRole() { return role; }
+    public void setRole(Role v) { this.role = v; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }
 
     public static UserResponse from(User user) {
         UserResponse r = new UserResponse();

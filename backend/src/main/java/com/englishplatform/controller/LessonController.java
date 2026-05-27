@@ -9,7 +9,6 @@ import com.englishplatform.service.GroupService;
 import com.englishplatform.service.LessonService;
 import com.englishplatform.service.VocabularyService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -21,12 +20,18 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/lessons")
-@RequiredArgsConstructor
 public class LessonController {
 
     private final LessonService lessonService;
     private final VocabularyService vocabularyService;
     private final GroupService groupService;
+
+    public LessonController(LessonService lessonService, VocabularyService vocabularyService,
+                            GroupService groupService) {
+        this.lessonService = lessonService;
+        this.vocabularyService = vocabularyService;
+        this.groupService = groupService;
+    }
 
     @GetMapping
     public ResponseEntity<List<LessonResponse>> getLessons(@AuthenticationPrincipal User user) {
@@ -94,11 +99,7 @@ public class LessonController {
                                                  @AuthenticationPrincipal User user) {
         req.setSourceType(WordSourceType.LESSON);
         req.setLessonId(id);
-
-        // Add to teacher's vocabulary
         vocabularyService.addWord(req, user);
-
-        // Auto-add to all members of groups that have access to this lesson
         lessonService.getById(id).getAccessGroups().forEach(group ->
             group.getMembers().forEach(member -> {
                 try {

@@ -1,11 +1,9 @@
 package com.englishplatform.dto.response;
 
 import com.englishplatform.entity.Message;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
 public class MessageResponse {
     private Long id;
     private UserResponse sender;
@@ -14,6 +12,21 @@ public class MessageResponse {
     private String content;
     private boolean isRead;
     private LocalDateTime createdAt;
+
+    public Long getId() { return id; }
+    public void setId(Long v) { this.id = v; }
+    public UserResponse getSender() { return sender; }
+    public void setSender(UserResponse v) { this.sender = v; }
+    public Long getReceiverId() { return receiverId; }
+    public void setReceiverId(Long v) { this.receiverId = v; }
+    public Long getGroupId() { return groupId; }
+    public void setGroupId(Long v) { this.groupId = v; }
+    public String getContent() { return content; }
+    public void setContent(String v) { this.content = v; }
+    public boolean isRead() { return isRead; }
+    public void setRead(boolean v) { this.isRead = v; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }
 
     public static MessageResponse from(Message message) {
         MessageResponse r = new MessageResponse();

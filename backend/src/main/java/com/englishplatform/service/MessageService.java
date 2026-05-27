@@ -9,7 +9,6 @@ import com.englishplatform.entity.User;
 import com.englishplatform.repository.GroupRepository;
 import com.englishplatform.repository.MessageRepository;
 import com.englishplatform.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +17,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class MessageService {
 
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final SimpMessagingTemplate messagingTemplate;
+
+    public MessageService(MessageRepository messageRepository, UserRepository userRepository,
+                          GroupRepository groupRepository, SimpMessagingTemplate messagingTemplate) {
+        this.messageRepository = messageRepository;
+        this.userRepository = userRepository;
+        this.groupRepository = groupRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     @Transactional
     public MessageResponse sendMessage(MessageRequest req, User sender) {
@@ -49,7 +55,6 @@ public class MessageService {
         Message saved = messageRepository.save(message);
         MessageResponse response = MessageResponse.from(saved);
 
-        // Broadcast via WebSocket
         if (saved.getGroup() != null) {
             messagingTemplate.convertAndSend("/topic/group/" + saved.getGroup().getId(), response);
         } else {

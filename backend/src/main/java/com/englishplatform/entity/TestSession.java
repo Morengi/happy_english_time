@@ -1,8 +1,6 @@
 package com.englishplatform.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,11 +8,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "test_sessions")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class TestSession {
 
     @Id
@@ -55,14 +48,61 @@ public class TestSession {
     private Group filterGroup;
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<TestResult> results = new ArrayList<>();
 
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        completedAt = LocalDateTime.now();
+    public TestSession() {}
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public Group getGroup() { return group; }
+    public void setGroup(Group group) { this.group = group; }
+    public int getTotalCount() { return totalCount; }
+    public void setTotalCount(int v) { this.totalCount = v; }
+    public int getCorrectCount() { return correctCount; }
+    public void setCorrectCount(int v) { this.correctCount = v; }
+    public BigDecimal getScorePercent() { return scorePercent; }
+    public void setScorePercent(BigDecimal v) { this.scorePercent = v; }
+    public TestDirection getDirection() { return direction; }
+    public void setDirection(TestDirection v) { this.direction = v; }
+    public WordFilterType getWordFilterType() { return wordFilterType; }
+    public void setWordFilterType(WordFilterType v) { this.wordFilterType = v; }
+    public Lesson getFilterLesson() { return filterLesson; }
+    public void setFilterLesson(Lesson v) { this.filterLesson = v; }
+    public Group getFilterGroup() { return filterGroup; }
+    public void setFilterGroup(Group v) { this.filterGroup = v; }
+    public List<TestResult> getResults() { return results; }
+    public void setResults(List<TestResult> results) { this.results = results; }
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime v) { this.completedAt = v; }
+
+    public static Builder builder() { return new Builder(); }
+    public static class Builder {
+        private User user; private Group group;
+        private int totalCount, correctCount;
+        private BigDecimal scorePercent;
+        private TestDirection direction;
+        private WordFilterType wordFilterType;
+        public Builder user(User v) { this.user = v; return this; }
+        public Builder group(Group v) { this.group = v; return this; }
+        public Builder totalCount(int v) { this.totalCount = v; return this; }
+        public Builder correctCount(int v) { this.correctCount = v; return this; }
+        public Builder scorePercent(BigDecimal v) { this.scorePercent = v; return this; }
+        public Builder direction(TestDirection v) { this.direction = v; return this; }
+        public Builder wordFilterType(WordFilterType v) { this.wordFilterType = v; return this; }
+        public TestSession build() {
+            TestSession s = new TestSession();
+            s.user = user; s.group = group; s.totalCount = totalCount;
+            s.correctCount = correctCount; s.scorePercent = scorePercent;
+            s.direction = direction; s.wordFilterType = wordFilterType;
+            return s;
+        }
     }
+
+    @PrePersist
+    protected void onCreate() { completedAt = LocalDateTime.now(); }
 }

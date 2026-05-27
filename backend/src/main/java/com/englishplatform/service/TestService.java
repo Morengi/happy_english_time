@@ -8,8 +8,6 @@ import com.englishplatform.entity.*;
 import com.englishplatform.repository.GroupRepository;
 import com.englishplatform.repository.TestSessionRepository;
 import com.englishplatform.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +17,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class TestService {
 
     private final TestSessionRepository testSessionRepository;
     private final VocabularyService vocabularyService;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
+
+    public TestService(TestSessionRepository testSessionRepository, VocabularyService vocabularyService,
+                       GroupRepository groupRepository, UserRepository userRepository) {
+        this.testSessionRepository = testSessionRepository;
+        this.vocabularyService = vocabularyService;
+        this.groupRepository = groupRepository;
+        this.userRepository = userRepository;
+    }
 
     public List<WordResponse> getTestWords(User user, int count,
                                             WordFilterType filterType,
@@ -36,7 +41,6 @@ public class TestService {
 
         if (words.isEmpty()) return List.of();
 
-        // Shuffle and limit; allow repeats if count > available
         List<Word> shuffled = new ArrayList<>(words);
         Collections.shuffle(shuffled);
 
@@ -101,14 +105,12 @@ public class TestService {
         userAnswer = userAnswer.trim().toLowerCase();
 
         if (direction == TestDirection.EN_TO_RU) {
-            // Check against all comma/semicolon-separated Russian translations
             String[] translations = answer.getRussianTranslation().split("[,;]+");
             for (String t : translations) {
                 if (t.trim().toLowerCase().equals(userAnswer)) return true;
             }
             return false;
         } else {
-            // RU_TO_EN: check English word
             String[] englishVariants = answer.getEnglishWord().split("[,;]+");
             for (String e : englishVariants) {
                 if (e.trim().toLowerCase().equals(userAnswer)) return true;
@@ -120,13 +122,12 @@ public class TestService {
     public List<RankingResponse> getGroupRanking(Long groupId) {
         List<Object[]> raw = testSessionRepository.findGroupRanking(groupId);
         List<RankingResponse> ranking = new ArrayList<>();
-        for (int i = 0; i < raw.size(); i++) {
-            Object[] row = raw.get(i);
+        for (Object[] row : raw) {
             Long userId = ((Number) row[0]).longValue();
             BigDecimal avgScore = new BigDecimal(row[1].toString()).setScale(2, RoundingMode.HALF_UP);
-            userRepository.findById(userId).ifPresent(u -> {
-                ranking.add(new RankingResponse(u.getId(), u.getFullName(), u.getNickname(), avgScore, ranking.size() + 1));
-            });
+            userRepository.findById(userId).ifPresent(u ->
+                ranking.add(new RankingResponse(u.getId(), u.getFullName(), u.getNickname(), avgScore, ranking.size() + 1))
+            );
         }
         return ranking;
     }

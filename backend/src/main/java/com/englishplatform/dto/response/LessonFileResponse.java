@@ -1,9 +1,7 @@
 package com.englishplatform.dto.response;
 
 import com.englishplatform.entity.LessonFile;
-import lombok.Data;
 
-@Data
 public class LessonFileResponse {
     private Long id;
     private String originalName;
@@ -13,6 +11,23 @@ public class LessonFileResponse {
     private boolean isVideo;
     private String url;
     private int sortOrder;
+
+    public Long getId() { return id; }
+    public void setId(Long v) { this.id = v; }
+    public String getOriginalName() { return originalName; }
+    public void setOriginalName(String v) { this.originalName = v; }
+    public String getFileType() { return fileType; }
+    public void setFileType(String v) { this.fileType = v; }
+    public Long getFileSize() { return fileSize; }
+    public void setFileSize(Long v) { this.fileSize = v; }
+    public boolean isImage() { return isImage; }
+    public void setImage(boolean v) { this.isImage = v; }
+    public boolean isVideo() { return isVideo; }
+    public void setVideo(boolean v) { this.isVideo = v; }
+    public String getUrl() { return url; }
+    public void setUrl(String v) { this.url = v; }
+    public int getSortOrder() { return sortOrder; }
+    public void setSortOrder(int v) { this.sortOrder = v; }
 
     public static LessonFileResponse from(LessonFile file) {
         LessonFileResponse r = new LessonFileResponse();

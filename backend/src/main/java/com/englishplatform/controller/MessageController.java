@@ -6,23 +6,22 @@ import com.englishplatform.dto.response.UserResponse;
 import com.englishplatform.entity.User;
 import com.englishplatform.service.MessageService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/messages")
-@RequiredArgsConstructor
 public class MessageController {
 
     private final MessageService messageService;
+
+    public MessageController(MessageService messageService) {
+        this.messageService = messageService;
+    }
 
     @PostMapping
     public ResponseEntity<MessageResponse> sendMessage(@Valid @RequestBody MessageRequest req,

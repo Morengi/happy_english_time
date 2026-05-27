@@ -6,7 +6,6 @@ import com.englishplatform.entity.*;
 import com.englishplatform.repository.GroupRepository;
 import com.englishplatform.repository.LessonRepository;
 import com.englishplatform.repository.WordRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,16 +13,21 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class VocabularyService {
 
     private final WordRepository wordRepository;
     private final LessonRepository lessonRepository;
     private final GroupRepository groupRepository;
 
+    public VocabularyService(WordRepository wordRepository, LessonRepository lessonRepository,
+                             GroupRepository groupRepository) {
+        this.wordRepository = wordRepository;
+        this.lessonRepository = lessonRepository;
+        this.groupRepository = groupRepository;
+    }
+
     @Transactional
     public WordResponse addWord(WordRequest req, User user) {
-        // Check for duplicate
         wordRepository.findDuplicate(
                 user.getId(), req.getEnglishWord(), req.getSourceType(),
                 req.getLessonId(), req.getGroupId()

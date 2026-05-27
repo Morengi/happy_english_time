@@ -6,7 +6,6 @@ import com.englishplatform.entity.*;
 import com.englishplatform.repository.GroupRepository;
 import com.englishplatform.repository.LessonRepository;
 import com.englishplatform.repository.WordRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class LessonService {
 
     private final LessonRepository lessonRepository;
@@ -24,6 +22,15 @@ public class LessonService {
     private final WordRepository wordRepository;
     private final UserService userService;
     private final FileService fileService;
+
+    public LessonService(LessonRepository lessonRepository, GroupRepository groupRepository,
+                         WordRepository wordRepository, UserService userService, FileService fileService) {
+        this.lessonRepository = lessonRepository;
+        this.groupRepository = groupRepository;
+        this.wordRepository = wordRepository;
+        this.userService = userService;
+        this.fileService = fileService;
+    }
 
     public Lesson getById(Long id) {
         return lessonRepository.findById(id)
@@ -64,12 +71,7 @@ public class LessonService {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found: " + groupId));
         lesson.getAccessGroups().add(group);
-
-        // Auto-add lesson words to all group members' vocabularies
-        Lesson savedLesson = lessonRepository.save(lesson);
-
-        // For now just grant access; words are added when lesson is viewed
-        return LessonResponse.from(savedLesson);
+        return LessonResponse.from(lessonRepository.save(lesson));
     }
 
     @Transactional

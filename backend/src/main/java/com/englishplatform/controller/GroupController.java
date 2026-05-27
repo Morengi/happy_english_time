@@ -13,7 +13,6 @@ import com.englishplatform.service.MessageService;
 import com.englishplatform.service.TestService;
 import com.englishplatform.service.VocabularyService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -23,13 +22,20 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/groups")
-@RequiredArgsConstructor
 public class GroupController {
 
     private final GroupService groupService;
     private final MessageService messageService;
     private final TestService testService;
     private final VocabularyService vocabularyService;
+
+    public GroupController(GroupService groupService, MessageService messageService,
+                           TestService testService, VocabularyService vocabularyService) {
+        this.groupService = groupService;
+        this.messageService = messageService;
+        this.testService = testService;
+        this.vocabularyService = vocabularyService;
+    }
 
     @GetMapping
     public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal User user) {
@@ -93,9 +99,7 @@ public class GroupController {
                                                 @AuthenticationPrincipal User user) {
         req.setSourceType(WordSourceType.GROUP);
         req.setGroupId(id);
-        // Add to teacher's own vocabulary
         vocabularyService.addWord(req, user);
-        // Add to all group members' vocabularies
         groupService.getById(id).getMembers().forEach(member -> {
             try {
                 vocabularyService.addWord(req, member);

@@ -4,6 +4,6 @@ VALUES (
     'Администратор',
     'admin',
     'admin@english-platform.ru',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+    '$2b$10$CG3XHynRIqRRHA950N2OSOAPp6T37wB2SnpTgFtNvio1MTZsyxW/m',
     'ADMIN'
 ) ON CONFLICT (nickname) DO NOTHING;

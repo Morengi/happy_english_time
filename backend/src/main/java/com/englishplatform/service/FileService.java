@@ -1,6 +1,7 @@
 package com.englishplatform.service;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,8 +14,9 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-@Slf4j
 public class FileService {
+
+    private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
     @Value("${app.upload.lesson-dir}")
     private String lessonDir;

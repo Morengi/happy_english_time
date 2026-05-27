@@ -1,8 +1,6 @@
 package com.englishplatform.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -11,11 +9,6 @@ import java.util.Set;
 
 @Entity
 @Table(name = "lessons")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Lesson {
 
     @Id
@@ -38,12 +31,10 @@ public class Lesson {
         joinColumns = @JoinColumn(name = "lesson_id"),
         inverseJoinColumns = @JoinColumn(name = "group_id")
     )
-    @Builder.Default
     private Set<Group> accessGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("sortOrder ASC")
-    @Builder.Default
     private List<LessonFile> files = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
@@ -52,14 +43,42 @@ public class Lesson {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+    public Lesson() {}
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+    public User getTeacher() { return teacher; }
+    public void setTeacher(User teacher) { this.teacher = teacher; }
+    public Set<Group> getAccessGroups() { return accessGroups; }
+    public void setAccessGroups(Set<Group> accessGroups) { this.accessGroups = accessGroups; }
+    public List<LessonFile> getFiles() { return files; }
+    public void setFiles(List<LessonFile> files) { this.files = files; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime v) { this.updatedAt = v; }
+
+    public static Builder builder() { return new Builder(); }
+    public static class Builder {
+        private String title, content;
+        private User teacher;
+        public Builder title(String v) { this.title = v; return this; }
+        public Builder content(String v) { this.content = v; return this; }
+        public Builder teacher(User v) { this.teacher = v; return this; }
+        public Lesson build() {
+            Lesson l = new Lesson();
+            l.title = title; l.content = content; l.teacher = teacher;
+            return l;
+        }
     }
 
+    @PrePersist
+    protected void onCreate() { createdAt = LocalDateTime.now(); updatedAt = LocalDateTime.now(); }
+
     @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    protected void onUpdate() { updatedAt = LocalDateTime.now(); }
 }

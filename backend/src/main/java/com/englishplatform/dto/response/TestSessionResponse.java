@@ -1,14 +1,14 @@
 package com.englishplatform.dto.response;
 
-import com.englishplatform.entity.*;
-import lombok.Data;
+import com.englishplatform.entity.TestDirection;
+import com.englishplatform.entity.TestSession;
+import com.englishplatform.entity.WordFilterType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Data
 public class TestSessionResponse {
     private Long id;
     private int totalCount;
@@ -19,7 +19,23 @@ public class TestSessionResponse {
     private LocalDateTime completedAt;
     private List<TestResultResponse> results;
 
-    @Data
+    public Long getId() { return id; }
+    public void setId(Long v) { this.id = v; }
+    public int getTotalCount() { return totalCount; }
+    public void setTotalCount(int v) { this.totalCount = v; }
+    public int getCorrectCount() { return correctCount; }
+    public void setCorrectCount(int v) { this.correctCount = v; }
+    public BigDecimal getScorePercent() { return scorePercent; }
+    public void setScorePercent(BigDecimal v) { this.scorePercent = v; }
+    public TestDirection getDirection() { return direction; }
+    public void setDirection(TestDirection v) { this.direction = v; }
+    public WordFilterType getWordFilterType() { return wordFilterType; }
+    public void setWordFilterType(WordFilterType v) { this.wordFilterType = v; }
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime v) { this.completedAt = v; }
+    public List<TestResultResponse> getResults() { return results; }
+    public void setResults(List<TestResultResponse> v) { this.results = v; }
+
     public static class TestResultResponse {
         private Long id;
         private Long wordId;
@@ -27,6 +43,19 @@ public class TestSessionResponse {
         private String russianTranslation;
         private String userAnswer;
         private boolean isCorrect;
+
+        public Long getId() { return id; }
+        public void setId(Long v) { this.id = v; }
+        public Long getWordId() { return wordId; }
+        public void setWordId(Long v) { this.wordId = v; }
+        public String getEnglishWord() { return englishWord; }
+        public void setEnglishWord(String v) { this.englishWord = v; }
+        public String getRussianTranslation() { return russianTranslation; }
+        public void setRussianTranslation(String v) { this.russianTranslation = v; }
+        public String getUserAnswer() { return userAnswer; }
+        public void setUserAnswer(String v) { this.userAnswer = v; }
+        public boolean isCorrect() { return isCorrect; }
+        public void setCorrect(boolean v) { this.isCorrect = v; }
     }
 
     public static TestSessionResponse from(TestSession session) {

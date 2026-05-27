@@ -8,7 +8,6 @@ import com.englishplatform.entity.User;
 import com.englishplatform.entity.WordFilterType;
 import com.englishplatform.service.TestService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,10 +16,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/test")
-@RequiredArgsConstructor
 public class TestController {
 
     private final TestService testService;
+
+    public TestController(TestService testService) {
+        this.testService = testService;
+    }
 
     @GetMapping("/words")
     public ResponseEntity<List<WordResponse>> getTestWords(
