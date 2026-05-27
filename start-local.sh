@@ -1,106 +1,127 @@
 #!/bin/bash
-set -e
 
 echo "=== EnglishPro — Локальный запуск ==="
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# ── Load user PATH (for tools installed via Homebrew / sdkman / etc.) ─────────
-[ -f "$HOME/.zshrc" ]   && source "$HOME/.zshrc"   2>/dev/null || true
-[ -f "$HOME/.bashrc" ]  && source "$HOME/.bashrc"  2>/dev/null || true
-[ -f "$HOME/.profile" ] && source "$HOME/.profile" 2>/dev/null || true
-
-# Add common Homebrew locations
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+# ── Add common tool paths without sourcing .zshrc (conda breaks set -e) ───────
+export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:$PATH"
 
 # ── Locate mvn ────────────────────────────────────────────────────────────────
-MVN=""
-for candidate in \
-    "$(which mvn 2>/dev/null)" \
-    /opt/homebrew/bin/mvn \
-    /usr/local/bin/mvn \
-    /usr/local/opt/maven/bin/mvn \
-    "$HOME/.sdkman/candidates/maven/current/bin/mvn"
-do
-  if [ -x "$candidate" ]; then
-    MVN="$candidate"
-    break
-  fi
-done
+find_mvn() {
+  for p in \
+      "$(command -v mvn 2>/dev/null)" \
+      /opt/homebrew/bin/mvn \
+      /usr/local/bin/mvn \
+      /usr/local/opt/maven/bin/mvn \
+      "$HOME/.sdkman/candidates/maven/current/bin/mvn" \
+      "$HOME/bin/mvn"
+  do
+    [ -x "$p" ] && echo "$p" && return 0
+  done
+  return 1
+}
 
-if [ -z "$MVN" ]; then
+MVN="$(find_mvn)" || {
   echo ""
-  echo "❌ Maven (mvn) не найден. Установите его:"
+  echo "❌ Maven (mvn) не найден."
   echo ""
-  echo "   macOS (Homebrew):  brew install maven"
-  echo "   или скачайте с:    https://maven.apache.org/download.cgi"
+  echo "   Установите одним из способов:"
+  echo "   • brew install maven          (рекомендуется, если есть Homebrew)"
+  echo "   • sdk install maven           (если есть sdkman)"
+  echo "   • https://maven.apache.org/download.cgi"
   echo ""
-  echo "   После установки снова запустите ./start-local.sh"
+  echo "   После установки запустите снова: ./start-local.sh"
+  exit 1
+}
+echo "✅ Maven: $MVN"
+
+# ── Locate java ───────────────────────────────────────────────────────────────
+if ! command -v java &>/dev/null && [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+  export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
+if ! command -v java &>/dev/null; then
+  echo "❌ Java не найдена. Установите JDK 17+:"
+  echo "   brew install openjdk@17"
   exit 1
 fi
-echo "✅ Maven найден: $MVN"
+echo "✅ Java: $(java -version 2>&1 | head -1)"
+
+# ── Locate node/npm ───────────────────────────────────────────────────────────
+if ! command -v node &>/dev/null; then
+  echo "❌ Node.js не найден. Установите:"
+  echo "   brew install node"
+  exit 1
+fi
+echo "✅ Node: $(node -v)"
 
 # ── Check Docker ──────────────────────────────────────────────────────────────
 if ! docker info > /dev/null 2>&1; then
-  echo "❌ Docker не запущен. Запустите Docker Desktop."
+  echo "❌ Docker не запущен. Запустите Docker Desktop и попробуйте снова."
   exit 1
 fi
+echo "✅ Docker запущен"
 
 # ── PostgreSQL ────────────────────────────────────────────────────────────────
 if lsof -i :5433 -sTCP:LISTEN -t > /dev/null 2>&1; then
-  echo "⚠️  Порт 5433 занят. Пытаюсь остановить старый контейнер..."
+  echo "⚠️  Порт 5433 занят. Останавливаю старый контейнер..."
   docker stop ep_postgres 2>/dev/null || true
   sleep 2
 fi
 
-echo "🐘 Запускаю PostgreSQL на порту 5433..."
+echo ""
+echo "🐘 Запускаю PostgreSQL (порт 5433)..."
 cd "$ROOT_DIR"
-docker compose up -d postgres
+docker compose up -d postgres 2>&1
 
 echo "⏳ Жду готовности PostgreSQL..."
 for i in $(seq 1 30); do
   if docker exec ep_postgres pg_isready -U postgres > /dev/null 2>&1; then
-    echo "✅ PostgreSQL готов!"
-    break
+    echo "✅ PostgreSQL готов!"; break
   fi
+  printf "."
   sleep 1
 done
+echo ""
 
 # ── Backend ───────────────────────────────────────────────────────────────────
-echo ""
 echo "☕ Запускаю Spring Boot backend (порт 8080)..."
 cd "$ROOT_DIR/backend"
 "$MVN" spring-boot:run > "$ROOT_DIR/backend.log" 2>&1 &
 BACKEND_PID=$!
-echo "   PID backend: $BACKEND_PID"
+echo "   PID: $BACKEND_PID  |  лог: backend.log"
 
 echo "⏳ Жду готовности backend (до 90 сек)..."
+BACKEND_OK=0
 for i in $(seq 1 45); do
   if curl -s -o /dev/null http://localhost:8080/api/auth/me 2>/dev/null; then
-    echo "✅ Backend готов!"
-    break
+    BACKEND_OK=1; break
   fi
+  printf "."
   sleep 2
   if ! kill -0 $BACKEND_PID 2>/dev/null; then
-    echo "❌ Backend упал. Последние строки лога:"
+    echo ""
+    echo "❌ Backend упал. Последние строки:"
     echo "────────────────────────────────────────"
-    tail -40 "$ROOT_DIR/backend.log"
+    tail -50 "$ROOT_DIR/backend.log"
     echo "────────────────────────────────────────"
-    echo "Полный лог: $ROOT_DIR/backend.log"
     exit 1
   fi
 done
+echo ""
+[ $BACKEND_OK -eq 1 ] && echo "✅ Backend готов!" || echo "⚠️  Backend долго стартует — проверьте backend.log"
 
 # ── Frontend ──────────────────────────────────────────────────────────────────
 echo ""
 echo "🌐 Запускаю Vue.js frontend (порт 3000)..."
 cd "$ROOT_DIR/frontend"
 if [ ! -d node_modules ]; then
-  echo "📦 Устанавливаю зависимости npm..."
+  echo "📦 Устанавливаю npm зависимости..."
   npm install
 fi
 npm run dev > "$ROOT_DIR/frontend.log" 2>&1 &
 FRONTEND_PID=$!
-echo "   PID frontend: $FRONTEND_PID"
+echo "   PID: $FRONTEND_PID  |  лог: frontend.log"
 sleep 4
 
 # ── Done ──────────────────────────────────────────────────────────────────────
@@ -114,19 +135,19 @@ echo "  🗄️  PostgreSQL: localhost:5433"
 echo ""
 echo "  👤 Логин: admin  |  Пароль: Admin@123"
 echo ""
-echo "  📋 Логи:"
-echo "     Backend:  tail -f $ROOT_DIR/backend.log"
-echo "     Frontend: tail -f $ROOT_DIR/frontend.log"
+echo "  Логи:"
+echo "    tail -f $ROOT_DIR/backend.log"
+echo "    tail -f $ROOT_DIR/frontend.log"
 echo "=================================================="
 echo ""
-echo "Нажмите Ctrl+C для остановки..."
+echo "Нажмите Ctrl+C для остановки всех сервисов..."
 
 cleanup() {
   echo ""
-  echo "🛑 Останавливаю сервисы..."
+  echo "🛑 Останавливаю..."
   kill $FRONTEND_PID 2>/dev/null || true
   kill $BACKEND_PID  2>/dev/null || true
-  cd "$ROOT_DIR" && docker compose stop postgres
+  cd "$ROOT_DIR" && docker compose stop postgres 2>/dev/null || true
   echo "Готово."
 }
 trap cleanup EXIT INT TERM
