@@ -32,13 +32,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
+        // Support token both as Authorization header and as ?token= query param.
+        // The query-param approach is needed for browser file-download links (<a href>)
+        // because browsers do not attach custom headers when navigating to a URL.
         final String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String jwt = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        } else {
+            String tokenParam = request.getParameter("token");
+            if (tokenParam != null && !tokenParam.isBlank()) {
+                jwt = tokenParam;
+            }
+        }
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        final String jwt = authHeader.substring(7);
         try {
             final String userNickname = jwtService.extractUsername(jwt);
             if (userNickname != null && SecurityContextHolder.getContext().getAuthentication() == null) {

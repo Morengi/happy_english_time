@@ -37,6 +37,15 @@ public class LessonService {
                 .orElseThrow(() -> new RuntimeException("Lesson not found: " + id));
     }
 
+    public LessonFile getFile(Long lessonId, Long fileId, User currentUser) {
+        Lesson lesson = getById(lessonId);
+        checkViewAccess(lesson, currentUser);
+        return lesson.getFiles().stream()
+                .filter(f -> f.getId().equals(fileId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("File not found: " + fileId));
+    }
+
     @Transactional
     public LessonResponse createLesson(LessonRequest req, User teacher) {
         Lesson lesson = Lesson.builder()

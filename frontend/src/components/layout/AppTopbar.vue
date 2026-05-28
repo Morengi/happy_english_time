@@ -16,13 +16,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { messageApi } from '@/api'
+import { useChatStore } from '@/stores/chat'
 
 const emit = defineEmits(['toggle-sidebar'])
 const route = useRoute()
-const unreadCount = ref(0)
+const chat = useChatStore()
+
+const unreadCount = computed(() => chat.unreadCount)
 
 const titleMap = {
   Dashboard: 'Главная',
@@ -39,13 +41,6 @@ const titleMap = {
 }
 
 const pageTitle = computed(() => titleMap[route.name] || 'EnglishPro')
-
-onMounted(async () => {
-  try {
-    const { data } = await messageApi.getUnread()
-    unreadCount.value = data.count
-  } catch {}
-})
 </script>
 
 <style lang="scss">

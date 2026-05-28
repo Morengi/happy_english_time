@@ -31,7 +31,13 @@ export const authApi = {
 export const userApi = {
   getProfile: () => api.get('/users/profile'),
   updateProfile: (data) => api.put('/users/profile', data),
+  uploadAvatar: (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post('/users/avatar', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
   searchStudents: (q) => api.get('/users/search', { params: { q } }),
+  searchAll: (q) => api.get('/users/search/all', { params: { q } }),
   getById: (id) => api.get(`/users/${id}`)
 }
 
@@ -83,11 +89,20 @@ export const testApi = {
   getHistory: () => api.get('/test/history')
 }
 
+export const uploadApi = {
+  image: (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post('/upload/image', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+  }
+}
+
 export const messageApi = {
   send: (data) => api.post('/messages', data),
   getPrivate: (otherId) => api.get(`/messages/private/${otherId}`),
   getContacts: () => api.get('/messages/contacts'),
-  getUnread: () => api.get('/messages/unread')
+  getUnread: () => api.get('/messages/unread'),
+  markAsRead: (senderId) => api.post(`/messages/read/${senderId}`)
 }
 
 export default api

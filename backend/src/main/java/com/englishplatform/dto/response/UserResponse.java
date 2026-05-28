@@ -11,6 +11,7 @@ public class UserResponse {
     private String nickname;
     private String email;
     private Role role;
+    private String avatarUrl;
     private LocalDateTime createdAt;
 
     public Long getId() { return id; }
@@ -23,6 +24,8 @@ public class UserResponse {
     public void setEmail(String v) { this.email = v; }
     public Role getRole() { return role; }
     public void setRole(Role v) { this.role = v; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String v) { this.avatarUrl = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }
 
@@ -33,6 +36,7 @@ public class UserResponse {
         r.setNickname(user.getNickname());
         r.setEmail(user.getEmail());
         r.setRole(user.getRole());
+        r.setAvatarUrl(user.getAvatarUrl());
         r.setCreatedAt(user.getCreatedAt());
         return r;
     }

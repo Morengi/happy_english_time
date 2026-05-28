@@ -14,13 +14,13 @@
     </nav>
 
     <div class="sidebar__footer">
-      <div class="sidebar__user" v-if="!collapsed">
-        <div class="sidebar__avatar">{{ initials }}</div>
+      <RouterLink v-if="!collapsed" to="/profile" class="sidebar__user sidebar__user--link">
+        <UserAvatar :user="user" :size="36" />
         <div class="sidebar__user-info">
           <div class="sidebar__user-name">{{ user?.fullName }}</div>
           <div class="sidebar__user-role">{{ roleLabel }}</div>
         </div>
-      </div>
+      </RouterLink>
       <button class="sidebar__logout btn btn--ghost btn--sm" @click="handleLogout" :title="'Выйти'">
         <span>🚪</span>
         <span v-if="!collapsed">Выйти</span>
@@ -33,6 +33,7 @@
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import UserAvatar from '@/components/common/UserAvatar.vue'
 
 const props = defineProps({ collapsed: Boolean })
 const emit = defineEmits(['toggle'])
@@ -162,21 +163,17 @@ function handleLogout() {
     align-items: center;
     gap: 10px;
     padding: 8px;
+
+    &--link {
+      text-decoration: none;
+      border-radius: $border-radius-sm;
+      transition: $transition;
+      cursor: pointer;
+
+      &:hover { background: $sidebar-hover; text-decoration: none; }
+    }
   }
 
-  &__avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: $primary;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: $font-size-sm;
-    flex-shrink: 0;
-  }
 
   &__user-name {
     font-weight: 600;

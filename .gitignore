@@ -27,3 +27,4 @@ uploads/
 # Environment
 .env
 *.env.local
+.claude/

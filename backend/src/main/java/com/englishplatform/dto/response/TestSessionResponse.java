@@ -16,6 +16,11 @@ public class TestSessionResponse {
     private BigDecimal scorePercent;
     private TestDirection direction;
     private WordFilterType wordFilterType;
+    // Filter details
+    private Long filterGroupId;
+    private String filterGroupName;
+    private Long filterLessonId;
+    private String filterLessonTitle;
     private LocalDateTime completedAt;
     private List<TestResultResponse> results;
 
@@ -31,6 +36,14 @@ public class TestSessionResponse {
     public void setDirection(TestDirection v) { this.direction = v; }
     public WordFilterType getWordFilterType() { return wordFilterType; }
     public void setWordFilterType(WordFilterType v) { this.wordFilterType = v; }
+    public Long getFilterGroupId() { return filterGroupId; }
+    public void setFilterGroupId(Long v) { this.filterGroupId = v; }
+    public String getFilterGroupName() { return filterGroupName; }
+    public void setFilterGroupName(String v) { this.filterGroupName = v; }
+    public Long getFilterLessonId() { return filterLessonId; }
+    public void setFilterLessonId(Long v) { this.filterLessonId = v; }
+    public String getFilterLessonTitle() { return filterLessonTitle; }
+    public void setFilterLessonTitle(String v) { this.filterLessonTitle = v; }
     public LocalDateTime getCompletedAt() { return completedAt; }
     public void setCompletedAt(LocalDateTime v) { this.completedAt = v; }
     public List<TestResultResponse> getResults() { return results; }
@@ -66,6 +79,14 @@ public class TestSessionResponse {
         r.setScorePercent(session.getScorePercent());
         r.setDirection(session.getDirection());
         r.setWordFilterType(session.getWordFilterType());
+        if (session.getFilterGroup() != null) {
+            r.setFilterGroupId(session.getFilterGroup().getId());
+            r.setFilterGroupName(session.getFilterGroup().getName());
+        }
+        if (session.getFilterLesson() != null) {
+            r.setFilterLessonId(session.getFilterLesson().getId());
+            r.setFilterLessonTitle(session.getFilterLesson().getTitle());
+        }
         r.setCompletedAt(session.getCompletedAt());
         r.setResults(session.getResults().stream().map(tr -> {
             TestResultResponse trr = new TestResultResponse();

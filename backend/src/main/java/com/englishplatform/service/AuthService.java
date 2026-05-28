@@ -33,6 +33,7 @@ public class AuthService {
                 .nickname(user.getNickname())
                 .fullName(user.getFullName())
                 .role(user.getRole())
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 }

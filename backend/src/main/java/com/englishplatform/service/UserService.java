@@ -6,6 +6,7 @@ import com.englishplatform.dto.response.UserResponse;
 import com.englishplatform.entity.Role;
 import com.englishplatform.entity.User;
 import com.englishplatform.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,8 +15,15 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +31,9 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.upload.avatar-dir}")
+    private String avatarDir;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -83,7 +94,8 @@ public class UserService implements UserDetailsService {
     }
 
     public Page<UserResponse> getAllUsers(Role role, String search, Pageable pageable) {
-        return userRepository.findAllWithFilters(role, search, pageable)
+        String roleStr = (role != null) ? role.name() : null;
+        return userRepository.findAllWithFilters(roleStr, search, pageable)
                 .map(UserResponse::from);
     }
 
@@ -93,8 +105,45 @@ public class UserService implements UserDetailsService {
                 .collect(Collectors.toList());
     }
 
+    public List<UserResponse> searchAllUsers(String search) {
+        return userRepository.searchAllUsers(search).stream()
+                .map(UserResponse::from)
+                .collect(Collectors.toList());
+    }
+
     public UserResponse getProfile(Long userId) {
         return UserResponse.from(getById(userId));
+    }
+
+    @Transactional
+    public UserResponse uploadAvatar(Long userId, MultipartFile file) throws IOException {
+        User user = getById(userId);
+
+        // Delete old avatar file if it exists
+        if (user.getAvatarUrl() != null) {
+            String oldName = Paths.get(user.getAvatarUrl()).getFileName().toString();
+            Path oldPath = Paths.get(avatarDir).resolve(oldName);
+            Files.deleteIfExists(oldPath);
+        }
+
+        // Store new avatar with UUID name to avoid conflicts
+        String ext = "";
+        String original = file.getOriginalFilename();
+        if (original != null && original.contains(".")) {
+            ext = original.substring(original.lastIndexOf('.'));
+        }
+        String storedName = UUID.randomUUID() + ext;
+        // Use toAbsolutePath() so the path is resolved from the working directory,
+        // not from Tomcat's temp dir (which is what transferTo() would do with a relative path).
+        Path dest = Paths.get(avatarDir).toAbsolutePath().resolve(storedName);
+        Files.createDirectories(dest.getParent());
+        // Files.copy() works correctly regardless of working directory
+        try (var in = file.getInputStream()) {
+            Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        user.setAvatarUrl("/uploads/avatars/" + storedName);
+        return UserResponse.from(userRepository.save(user));
     }
 
     private static String blankToNull(String s) {

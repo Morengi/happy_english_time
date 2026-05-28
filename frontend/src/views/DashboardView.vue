@@ -32,13 +32,23 @@
         </div>
         <div v-else class="test-list">
           <div v-for="test in recentTests" :key="test.id" class="test-item">
-            <div class="test-item__info">
-              <span class="text-sm text-muted">{{ formatDate(test.completedAt) }}</span>
-              <span class="badge" :class="scoreClass(test.scorePercent)">
+            <div class="test-item__top">
+              <span class="test-item__score" :class="scoreClass(test.scorePercent)">
                 {{ test.scorePercent }}%
               </span>
+              <span class="text-sm text-muted">{{ formatDate(test.completedAt) }}</span>
             </div>
-            <div class="text-sm">{{ test.correctCount }} / {{ test.totalCount }} правильно</div>
+            <div class="test-item__chips">
+              <span class="ti-chip ti-chip--words">
+                📝 {{ test.correctCount }}/{{ test.totalCount }}
+              </span>
+              <span class="ti-chip ti-chip--dir">
+                {{ test.direction === 'EN_TO_RU' ? 'EN→RU' : 'RU→EN' }}
+              </span>
+              <span class="ti-chip" :class="filterChipClass(test.wordFilterType)">
+                {{ filterLabel(test) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -101,9 +111,25 @@ function formatDate(dt) {
 }
 
 function scoreClass(score) {
-  if (score >= 80) return 'badge--success'
-  if (score >= 50) return 'badge--warning'
-  return 'badge--danger'
+  if (score >= 80) return 'score--good'
+  if (score >= 50) return 'score--ok'
+  return 'score--bad'
+}
+
+function filterLabel(test) {
+  if (test.wordFilterType === 'BY_LESSON') {
+    return test.filterLessonTitle ? `📖 ${test.filterLessonTitle}` : '📖 Занятия'
+  }
+  if (test.wordFilterType === 'BY_GROUP') {
+    return test.filterGroupName ? `👥 ${test.filterGroupName}` : '👥 Группы'
+  }
+  return '📚 Все слова'
+}
+
+function filterChipClass(type) {
+  if (type === 'BY_LESSON') return 'ti-chip--lesson'
+  if (type === 'BY_GROUP')  return 'ti-chip--group'
+  return 'ti-chip--all'
 }
 </script>
 
@@ -128,17 +154,50 @@ function scoreClass(score) {
   margin-bottom: 16px;
 }
 
-.test-list { display: flex; flex-direction: column; gap: 10px; }
+.test-list { display: flex; flex-direction: column; gap: 8px; }
 
 .test-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 10px 12px;
   border-radius: $border-radius-sm;
   background: $bg;
 
-  &__info { display: flex; align-items: center; gap: 10px; }
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  &__score {
+    font-size: $font-size-lg;
+    font-weight: 700;
+    line-height: 1;
+
+    &.score--good { color: $success; }
+    &.score--ok   { color: $warning; }
+    &.score--bad  { color: $danger; }
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+.ti-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &--words  { background: #f0f7ff; color: #2563eb; }
+  &--dir    { background: #f5f0ff; color: #7c3aed; }
+  &--all    { background: #f0fdf4; color: #16a34a; }
+  &--lesson { background: #fff7ed; color: #c2410c; }
+  &--group  { background: #fdf4ff; color: #9333ea; }
 }
 
 .quick-actions {

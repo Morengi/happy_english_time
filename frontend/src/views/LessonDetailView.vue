@@ -31,23 +31,35 @@
 
       <!-- Images -->
       <div v-if="images.length" class="lesson-images">
-        <img v-for="f in images" :key="f.id" :src="f.url" :alt="f.originalName" class="lesson-image" />
+        <div v-for="f in images" :key="f.id" class="lesson-image-wrap">
+          <img :src="f.url" :alt="f.originalName" class="lesson-image" />
+          <button v-if="canManage" class="file-delete-btn" @click="deleteFile(f)" title="Удалить">✕</button>
+        </div>
       </div>
 
       <!-- Videos -->
       <div v-for="f in videos" :key="f.id" class="lesson-video-wrap">
+        <div class="lesson-video-header">
+          <p class="text-sm text-muted">{{ f.originalName }}</p>
+          <button v-if="canManage" class="btn btn--danger btn--sm" @click="deleteFile(f)">🗑️ Удалить</button>
+        </div>
         <video :src="f.url" controls class="lesson-video"></video>
-        <p class="text-sm text-muted">{{ f.originalName }}</p>
       </div>
 
       <!-- Documents -->
       <div v-if="docs.length" class="lesson-docs">
-        <a v-for="f in docs" :key="f.id" :href="f.url" :download="f.originalName" class="doc-item">
-          <span class="doc-item__icon">{{ docIcon(f.fileType) }}</span>
-          <span class="doc-item__name">{{ f.originalName }}</span>
-          <span class="doc-item__size">{{ formatSize(f.fileSize) }}</span>
-          <span class="doc-item__dl">⬇</span>
-        </a>
+        <div v-for="f in docs" :key="f.id" class="doc-item-wrap">
+          <a href="#"
+            @click.prevent="downloadDoc(f)"
+            class="doc-item"
+            :class="{ 'doc-item--loading': downloadingFiles[f.id] }">
+            <span class="doc-item__icon">{{ docIcon(f.fileType) }}</span>
+            <span class="doc-item__name">{{ f.originalName }}</span>
+            <span class="doc-item__size">{{ formatSize(f.fileSize) }}</span>
+            <span class="doc-item__dl">{{ downloadingFiles[f.id] ? '⏳' : '⬇' }}</span>
+          </a>
+          <button v-if="canManage" class="btn btn--danger btn--sm doc-item-delete" @click="deleteFile(f)">🗑️</button>
+        </div>
       </div>
     </div>
 
@@ -81,8 +93,13 @@
             <input v-model="editForm.title" type="text" class="form-control" />
           </div>
           <div class="form-group">
-            <label>Содержание (HTML)</label>
-            <textarea v-model="editForm.content" class="form-control" rows="10"></textarea>
+            <label>Теория</label>
+            <RichEditor
+              v-model="editForm.content"
+              :upload-image-fn="uploadEditorImage"
+              placeholder="Введите теорию занятия..."
+              min-height="320px"
+            />
           </div>
         </div>
         <div class="modal__footer">
@@ -139,11 +156,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
-import { lessonApi, groupApi } from '@/api'
+import { lessonApi, groupApi, uploadApi } from '@/api'
+import RichEditor from '@/components/common/RichEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -159,6 +177,7 @@ const uploading = ref(false)
 const fileInputRef = ref(null)
 const editForm = ref({ title: '', content: '' })
 const wordForm = ref({ englishWord: '', russianTranslation: '' })
+const downloadingFiles = reactive({})
 
 const canManage = computed(() => auth.isAdmin ||
   (auth.isTeacher && lesson.value?.teacher?.id === auth.user?.id))
@@ -227,6 +246,48 @@ async function uploadFile(file) {
   } catch { toast.error('Ошибка загрузки файла') } finally { uploading.value = false }
 }
 
+async function deleteFile(file) {
+  if (!confirm(`Удалить файл "${file.originalName}"?`)) return
+  try {
+    await lessonApi.deleteFile(route.params.id, file.id)
+    lesson.value.files = lesson.value.files.filter(f => f.id !== file.id)
+    toast.success('Файл удалён')
+  } catch { toast.error('Ошибка удаления файла') }
+}
+
+async function uploadEditorImage(file) {
+  const { data } = await uploadApi.image(file)
+  return data.url
+}
+
+// Universal file download via fetch → Blob → ObjectURL.
+// Bypasses the Samsung Browser / iOS built-in download manager which
+// often gets stuck at 100% and never saves the file.
+async function downloadDoc(file) {
+  if (downloadingFiles[file.id]) return
+  downloadingFiles[file.id] = true
+  try {
+    const res = await fetch(
+      `/api/lessons/${lesson.value.id}/files/${file.id}/download`,
+      { headers: { Authorization: `Bearer ${auth.token}` } }
+    )
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    const blob = await res.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = file.originalName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+  } catch {
+    toast.error('Ошибка скачивания файла')
+  } finally {
+    downloadingFiles[file.id] = false
+  }
+}
+
 async function addWord() {
   if (!wordForm.value.englishWord || !wordForm.value.russianTranslation) return
   try {
@@ -267,22 +328,68 @@ function docIcon(type) {
   margin-bottom: 20px;
 }
 
+.lesson-image-wrap {
+  position: relative;
+  &:hover .file-delete-btn { opacity: 1; }
+}
+
 .lesson-image {
   border-radius: $border-radius-sm;
   width: 100%;
   object-fit: cover;
   max-height: 300px;
+  display: block;
+}
+
+.file-delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(220,38,38,.85);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover { background: #b91c1c; }
 }
 
 .lesson-video-wrap { margin-bottom: 16px; }
+.lesson-video-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  p { margin: 0; }
+}
 .lesson-video { width: 100%; border-radius: $border-radius-sm; max-height: 480px; }
 
 .lesson-docs { display: flex; flex-direction: column; gap: 8px; }
+
+.doc-item-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-item-delete { flex-shrink: 0; }
 
 .doc-item {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  cursor: pointer;
+
+  &--loading { opacity: .6; pointer-events: none; }
   padding: 12px 16px;
   border-radius: $border-radius-sm;
   background: $bg;

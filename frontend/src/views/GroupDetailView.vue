@@ -20,15 +20,32 @@
 
     <!-- Members tab -->
     <div v-if="activeTab === 'members'" class="card" style="margin-top:20px">
-      <h3 style="margin-bottom:16px">Участники ({{ group.members?.length || 0 }})</h3>
+
+      <!-- Teacher block -->
+      <div v-if="group.teacher" class="teacher-block">
+        <UserAvatar :user="group.teacher" :size="40" />
+        <div class="member-item__info">
+          <div class="member-item__name">{{ group.teacher.fullName }}</div>
+          <div class="member-item__nick text-muted text-sm">@{{ group.teacher.nickname }}</div>
+        </div>
+        <span class="role-badge">Преподаватель</span>
+      </div>
+
+      <div class="members-divider">
+        <span>Студенты ({{ group.members?.length || 0 }})</span>
+      </div>
+
       <div class="members-list">
         <div v-for="member in group.members" :key="member.id" class="member-item">
-          <div class="member-item__avatar">{{ initials(member.fullName) }}</div>
+          <UserAvatar :user="member" :size="36" />
           <div class="member-item__info">
             <div class="member-item__name">{{ member.fullName }}</div>
             <div class="member-item__nick text-muted text-sm">@{{ member.nickname }}</div>
           </div>
           <button v-if="canManage" class="btn btn--ghost btn--sm" @click="removeMember(member.id)" title="Удалить">🗑️</button>
+        </div>
+        <div v-if="!group.members?.length" class="text-muted text-sm" style="padding:12px 10px">
+          Участников пока нет
         </div>
       </div>
     </div>
@@ -91,7 +108,7 @@
           </div>
           <div class="search-results">
             <div v-for="u in searchResults" :key="u.id" class="search-result-item" @click="addMember(u.nickname)">
-              <div class="member-item__avatar small">{{ initials(u.fullName) }}</div>
+              <UserAvatar :user="u" :size="32" />
               <div>
                 <div>{{ u.fullName }}</div>
                 <div class="text-sm text-muted">@{{ u.nickname }}</div>
@@ -138,15 +155,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
+import { useChatStore } from '@/stores/chat'
 import { groupApi, userApi, messageApi } from '@/api'
+import UserAvatar from '@/components/common/UserAvatar.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
 const toast = useToastStore()
+const chat = useChatStore()
 
 const group = ref(null)
 const messages = ref([])
@@ -169,9 +189,23 @@ const tabs = [
 
 const canManage = ref(false)
 
+let unsubscribeGroup = null
+
 onMounted(async () => {
   await loadGroup()
   await Promise.all([loadMessages(), loadRanking()])
+
+  // Subscribe to real-time group chat messages via WebSocket
+  unsubscribeGroup = chat.subscribeToGroup(route.params.id, (msg) => {
+    if (!messages.value.find(m => m.id === msg.id)) {
+      messages.value.push(msg)
+      nextTick().then(scrollChat)
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (unsubscribeGroup) unsubscribeGroup()
 })
 
 async function loadGroup() {
@@ -204,11 +238,9 @@ function scrollChat() {
 async function sendMessage() {
   if (!newMessage.value.trim()) return
   try {
-    const { data } = await messageApi.send({ groupId: parseInt(route.params.id), content: newMessage.value })
-    messages.value.push(data)
+    await messageApi.send({ groupId: parseInt(route.params.id), content: newMessage.value })
+    // Don't push locally — message arrives back via WebSocket to avoid duplicates
     newMessage.value = ''
-    await nextTick()
-    scrollChat()
   } catch { toast.error('Ошибка отправки') }
 }
 
@@ -288,7 +320,40 @@ function formatTime(dt) {
   &:hover:not(.active) { color: $text; }
 }
 
-.members-list { display: flex; flex-direction: column; gap: 8px; }
+.teacher-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: $primary-light;
+  border-radius: $border-radius-sm;
+  margin-bottom: 4px;
+}
+
+.role-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: $primary;
+  color: white;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.members-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 10px 8px;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.members-list { display: flex; flex-direction: column; gap: 4px; }
 
 .member-item {
   display: flex;

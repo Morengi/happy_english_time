@@ -7,7 +7,9 @@ import com.englishplatform.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -31,9 +33,20 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(user.getId(), req));
     }
 
+    @PostMapping("/avatar")
+    public ResponseEntity<UserResponse> uploadAvatar(@RequestParam("file") MultipartFile file,
+                                                      @AuthenticationPrincipal User user) throws IOException {
+        return ResponseEntity.ok(userService.uploadAvatar(user.getId(), file));
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<UserResponse>> searchStudents(@RequestParam String q) {
         return ResponseEntity.ok(userService.searchStudents(q));
+    }
+
+    @GetMapping("/search/all")
+    public ResponseEntity<List<UserResponse>> searchAllUsers(@RequestParam String q) {
+        return ResponseEntity.ok(userService.searchAllUsers(q));
     }
 
     @GetMapping("/{id}")

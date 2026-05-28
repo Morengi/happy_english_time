@@ -74,10 +74,10 @@ public class GroupService {
         List<Group> groups;
         if (user.getRole() == Role.ADMIN) {
             groups = groupRepository.findAll();
-        } else if (user.getRole() == Role.TEACHER) {
-            groups = groupRepository.findByTeacher(user);
         } else {
-            groups = groupRepository.findByMember(user);
+            // For TEACHER: returns groups they teach AND groups they're a member of
+            // For STUDENT: same query but teacher condition never matches, so effectively findByMember
+            groups = groupRepository.findAllForUser(user);
         }
         return groups.stream().map(GroupResponse::from).collect(Collectors.toList());
     }

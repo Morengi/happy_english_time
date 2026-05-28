@@ -6,6 +6,7 @@ import com.englishplatform.dto.response.TestSessionResponse;
 import com.englishplatform.dto.response.WordResponse;
 import com.englishplatform.entity.*;
 import com.englishplatform.repository.GroupRepository;
+import com.englishplatform.repository.LessonRepository;
 import com.englishplatform.repository.TestSessionRepository;
 import com.englishplatform.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -22,13 +23,16 @@ public class TestService {
     private final TestSessionRepository testSessionRepository;
     private final VocabularyService vocabularyService;
     private final GroupRepository groupRepository;
+    private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
 
     public TestService(TestSessionRepository testSessionRepository, VocabularyService vocabularyService,
-                       GroupRepository groupRepository, UserRepository userRepository) {
+                       GroupRepository groupRepository, LessonRepository lessonRepository,
+                       UserRepository userRepository) {
         this.testSessionRepository = testSessionRepository;
         this.vocabularyService = vocabularyService;
         this.groupRepository = groupRepository;
+        this.lessonRepository = lessonRepository;
         this.userRepository = userRepository;
     }
 
@@ -44,14 +48,9 @@ public class TestService {
         List<Word> shuffled = new ArrayList<>(words);
         Collections.shuffle(shuffled);
 
-        List<Word> testWords = new ArrayList<>();
-        int idx = 0;
-        for (int i = 0; i < count; i++) {
-            testWords.add(shuffled.get(idx % shuffled.size()));
-            idx++;
-        }
-
-        return testWords.stream().map(WordResponse::from).collect(Collectors.toList());
+        // count <= 0 means "all words"; also cap to avoid repeating words
+        int take = (count <= 0) ? shuffled.size() : Math.min(count, shuffled.size());
+        return shuffled.subList(0, take).stream().map(WordResponse::from).collect(Collectors.toList());
     }
 
     @Transactional
@@ -82,9 +81,21 @@ public class TestService {
             group = groupRepository.findById(req.getGroupId()).orElse(null);
         }
 
+        Lesson filterLesson = null;
+        if (req.getFilterLessonId() != null) {
+            filterLesson = lessonRepository.findById(req.getFilterLessonId()).orElse(null);
+        }
+
+        Group filterGroup = null;
+        if (req.getFilterGroupId() != null) {
+            filterGroup = groupRepository.findById(req.getFilterGroupId()).orElse(null);
+        }
+
         TestSession session = TestSession.builder()
                 .user(user)
                 .group(group)
+                .filterLesson(filterLesson)
+                .filterGroup(filterGroup)
                 .totalCount(total)
                 .correctCount(correctCount)
                 .scorePercent(score)

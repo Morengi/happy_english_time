@@ -29,7 +29,7 @@
 
     <!-- Create modal -->
     <div v-if="showCreate" class="modal-overlay" @click.self="showCreate = false">
-      <div class="modal">
+      <div class="modal modal--wide">
         <div class="modal__header">
           <h3>Создать занятие</h3>
           <button class="btn btn--ghost btn--icon" @click="showCreate = false">✕</button>
@@ -40,8 +40,13 @@
             <input v-model="createForm.title" type="text" class="form-control" placeholder="Тема занятия" />
           </div>
           <div class="form-group">
-            <label>Описание (необязательно)</label>
-            <textarea v-model="createForm.content" class="form-control" rows="3"></textarea>
+            <label>Теория (необязательно)</label>
+            <RichEditor
+              v-model="createForm.content"
+              :upload-image-fn="uploadEditorImage"
+              placeholder="Введите теорию занятия..."
+              min-height="200px"
+            />
           </div>
         </div>
         <div class="modal__footer">
@@ -58,7 +63,8 @@ import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
-import { lessonApi } from '@/api'
+import { lessonApi, uploadApi } from '@/api'
+import RichEditor from '@/components/common/RichEditor.vue'
 
 const auth = useAuthStore()
 const toast = useToastStore()
@@ -77,6 +83,11 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+async function uploadEditorImage(file) {
+  const { data } = await uploadApi.image(file)
+  return data.url
 }
 
 async function createLesson() {

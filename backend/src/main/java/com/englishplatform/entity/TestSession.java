@@ -83,12 +83,15 @@ public class TestSession {
     public static Builder builder() { return new Builder(); }
     public static class Builder {
         private User user; private Group group;
+        private Lesson filterLesson; private Group filterGroup;
         private int totalCount, correctCount;
         private BigDecimal scorePercent;
         private TestDirection direction;
         private WordFilterType wordFilterType;
         public Builder user(User v) { this.user = v; return this; }
         public Builder group(Group v) { this.group = v; return this; }
+        public Builder filterLesson(Lesson v) { this.filterLesson = v; return this; }
+        public Builder filterGroup(Group v) { this.filterGroup = v; return this; }
         public Builder totalCount(int v) { this.totalCount = v; return this; }
         public Builder correctCount(int v) { this.correctCount = v; return this; }
         public Builder scorePercent(BigDecimal v) { this.scorePercent = v; return this; }
@@ -96,8 +99,10 @@ public class TestSession {
         public Builder wordFilterType(WordFilterType v) { this.wordFilterType = v; return this; }
         public TestSession build() {
             TestSession s = new TestSession();
-            s.user = user; s.group = group; s.totalCount = totalCount;
-            s.correctCount = correctCount; s.scorePercent = scorePercent;
+            s.user = user; s.group = group;
+            s.filterLesson = filterLesson; s.filterGroup = filterGroup;
+            s.totalCount = totalCount; s.correctCount = correctCount;
+            s.scorePercent = scorePercent;
             s.direction = direction; s.wordFilterType = wordFilterType;
             return s;
         }

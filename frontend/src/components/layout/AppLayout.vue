@@ -17,9 +17,14 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import AppTopbar from './AppTopbar.vue'
+import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
 
 const sidebarCollapsed = ref(false)
 const isMobile = ref(window.innerWidth < 1024)
+
+const chat = useChatStore()
+const auth = useAuthStore()
 
 function onResize() {
   isMobile.value = window.innerWidth < 1024
@@ -29,8 +34,18 @@ function onResize() {
 onMounted(() => {
   onResize()
   window.addEventListener('resize', onResize)
+
+  // Connect WebSocket and load initial unread count
+  if (auth.token) {
+    chat.connect(auth.token)
+    chat.fetchUnread()
+  }
 })
-onUnmounted(() => window.removeEventListener('resize', onResize))
+
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
+  chat.disconnect()
+})
 </script>
 
 <style lang="scss">

@@ -6,7 +6,16 @@
 
     <div class="card" style="max-width:600px">
       <div class="profile-avatar">
-        <div class="profile-avatar__circle">{{ initials }}</div>
+        <!-- Avatar circle: photo or initials -->
+        <div class="profile-avatar__circle" @click="avatarInputRef.click()" title="Нажмите, чтобы изменить фото">
+          <img v-if="avatarUrl" :src="avatarUrl" class="profile-avatar__img" alt="Аватар" />
+          <span v-else>{{ initials }}</span>
+          <div class="profile-avatar__overlay">
+            <span>{{ avatarUploading ? '⏳' : '📷' }}</span>
+          </div>
+        </div>
+        <input type="file" ref="avatarInputRef" accept="image/*" style="display:none" @change="onAvatarChange" />
+
         <div>
           <div class="profile-avatar__name">{{ form.fullName }}</div>
           <div class="badge badge--primary">{{ roleLabel }}</div>
@@ -55,6 +64,9 @@ const auth = useAuthStore()
 const toast = useToastStore()
 const saving = ref(false)
 const error = ref('')
+const avatarUploading = ref(false)
+const avatarInputRef = ref(null)
+const avatarUrl = ref(null)
 
 const form = ref({ fullName: '', nickname: '', email: '', password: '' })
 
@@ -72,7 +84,25 @@ onMounted(async () => {
   form.value.fullName = data.fullName
   form.value.nickname = data.nickname
   form.value.email = data.email || ''
+  avatarUrl.value = data.avatarUrl || null
 })
+
+async function onAvatarChange(e) {
+  const file = e.target.files[0]
+  e.target.value = ''
+  if (!file) return
+  avatarUploading.value = true
+  try {
+    const { data } = await userApi.uploadAvatar(file)
+    avatarUrl.value = data.avatarUrl
+    auth.updateUser({ avatarUrl: data.avatarUrl })
+    toast.success('Фото профиля обновлено')
+  } catch {
+    toast.error('Ошибка загрузки фото')
+  } finally {
+    avatarUploading.value = false
+  }
+}
 
 async function save() {
   error.value = ''
@@ -102,17 +132,42 @@ async function save() {
   margin-bottom: 32px;
 
   &__circle {
-    width: 72px;
-    height: 72px;
+    position: relative;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background: $primary;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 700;
     flex-shrink: 0;
+    cursor: pointer;
+    overflow: hidden;
+
+    &:hover .profile-avatar__overlay { opacity: 1; }
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    opacity: 0;
+    transition: opacity .2s;
   }
 
   &__name {

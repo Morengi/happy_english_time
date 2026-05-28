@@ -10,13 +10,21 @@
 
       <div class="form-group">
         <label>Количество слов</label>
-        <select v-model="config.count" class="form-control">
-          <option value="5">5 слов</option>
-          <option value="10">10 слов</option>
-          <option value="20">20 слов</option>
-          <option value="30">30 слов</option>
-          <option value="50">50 слов</option>
-        </select>
+        <div class="count-toggle">
+          <button class="count-toggle__btn" :class="{ active: config.countMode === 'all' }"
+            @click="config.countMode = 'all'">
+            Все слова
+          </button>
+          <button class="count-toggle__btn" :class="{ active: config.countMode === 'custom' }"
+            @click="config.countMode = 'custom'">
+            Указать число
+          </button>
+        </div>
+        <div v-if="config.countMode === 'custom'" class="count-input-row">
+          <input v-model.number="config.customCount" type="number" min="1" class="form-control count-input"
+            placeholder="Сколько слов?" @input="clampCount" />
+          <span class="count-input-label">слов</span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -46,7 +54,10 @@
 
       <div v-if="config.filterType === 'BY_GROUP'" class="form-group">
         <label>Группа (необязательно)</label>
-        <select v-model="config.filterGroupId" class="form-control">
+        <div v-if="groups.length === 0" class="filter-hint">
+          Вы не состоите ни в одной группе
+        </div>
+        <select v-else v-model="config.filterGroupId" class="form-control">
           <option :value="null">Все группы</option>
           <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name }}</option>
         </select>
@@ -143,12 +154,17 @@ const groups = ref([])
 const inputRef = ref(null)
 
 const config = ref({
-  count: 10,
+  countMode: 'all',    // 'all' | 'custom'
+  customCount: 10,
   direction: 'EN_TO_RU',
   filterType: 'ALL',
   filterLessonId: null,
   filterGroupId: null
 })
+
+function clampCount() {
+  if (config.value.customCount < 1) config.value.customCount = 1
+}
 
 const currentQuestion = computed(() => {
   const word = testWords.value[currentIndex.value]
@@ -177,19 +193,28 @@ const scoreMessage = computed(() => {
   return '💪 Нужно больше практики'
 })
 
-onMounted(async () => {
-  try {
-    const [lr, gr] = await Promise.all([lessonApi.getAll(), groupApi.getAll()])
-    lessons.value = lr.data
-    groups.value = gr.data
-  } catch {}
+onMounted(() => {
+  // Load independently so one failure doesn't prevent the other from loading
+  lessonApi.getAll().then(r => { lessons.value = r.data }).catch(() => {})
+  groupApi.getAll().then(r => { groups.value = r.data }).catch(() => {})
 })
 
 async function startTest() {
+  // Validate custom count
+  if (config.value.countMode === 'custom') {
+    const n = parseInt(config.value.customCount)
+    if (!n || n < 1) {
+      toast.error('Введите количество слов (минимум 1)')
+      return
+    }
+    config.value.customCount = n
+  }
+
   loading.value = true
   try {
     const params = {
-      count: config.value.count,
+      // 0 → backend returns all available words
+      count: config.value.countMode === 'all' ? 0 : config.value.customCount,
       direction: config.value.direction,
       filterType: config.value.filterType
     }
@@ -353,5 +378,68 @@ async function finish() {
 
   .correct { color: darken($success, 10%); font-weight: 600; }
   .wrong { color: darken($danger, 10%); font-weight: 600; }
+}
+
+// ─── Count mode toggle ────────────────────────────────────────────────────────
+.count-toggle {
+  display: flex;
+  border: 1px solid $border;
+  border-radius: $border-radius-sm;
+  overflow: hidden;
+  margin-top: 6px;
+
+  &__btn {
+    flex: 1;
+    padding: 9px 16px;
+    border: none;
+    background: white;
+    font-size: $font-size-base;
+    font-family: $font-family;
+    color: $text-muted;
+    cursor: pointer;
+    transition: $transition;
+    font-weight: 500;
+
+    & + & { border-left: 1px solid $border; }
+
+    &.active {
+      background: $primary;
+      color: white;
+    }
+
+    &:not(.active):hover {
+      background: $bg;
+      color: $text;
+    }
+  }
+}
+
+.count-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.count-input {
+  width: 120px;
+  text-align: center;
+  font-size: $font-size-lg;
+  font-weight: 600;
+}
+
+.count-input-label {
+  font-size: $font-size-base;
+  color: $text-muted;
+}
+
+.filter-hint {
+  margin-top: 6px;
+  padding: 10px 14px;
+  border-radius: $border-radius-sm;
+  background: $warning-light;
+  font-size: $font-size-sm;
+  color: darken($warning, 30%);
+  border: 1px solid $warning;
 }
 </style>
