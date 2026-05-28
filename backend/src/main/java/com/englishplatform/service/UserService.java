@@ -53,7 +53,7 @@ public class UserService implements UserDetailsService {
         User user = User.builder()
                 .fullName(req.getFullName())
                 .nickname(req.getNickname())
-                .email(req.getEmail())
+                .email(blankToNull(req.getEmail()))
                 .password(passwordEncoder.encode(req.getPassword()))
                 .role(req.getRole())
                 .build();
@@ -70,7 +70,7 @@ public class UserService implements UserDetailsService {
             }
             user.setNickname(req.getNickname());
         }
-        if (req.getEmail() != null) user.setEmail(req.getEmail());
+        if (req.getEmail() != null) user.setEmail(blankToNull(req.getEmail()));
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(req.getPassword()));
         }
@@ -95,5 +95,9 @@ public class UserService implements UserDetailsService {
 
     public UserResponse getProfile(Long userId) {
         return UserResponse.from(getById(userId));
+    }
+
+    private static String blankToNull(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
     }
 }

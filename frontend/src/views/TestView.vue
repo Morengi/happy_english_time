@@ -92,9 +92,9 @@
 
     <!-- Results screen -->
     <div v-if="phase === 'results' && results">
-      <RouterLink to="/test" class="btn btn--secondary btn--sm" style="margin-bottom:20px">
+      <button class="btn btn--secondary btn--sm" style="margin-bottom:20px" @click="resetTest">
         ← Новый тест
-      </RouterLink>
+      </button>
 
       <div class="results-header card" style="text-align:center;margin-bottom:20px;padding:32px">
         <div class="results-score" :class="scoreClass">{{ results.scorePercent }}%</div>
@@ -226,6 +226,14 @@ function prevWord() {
     currentIndex.value--
     nextTick(() => inputRef.value?.focus())
   }
+}
+
+function resetTest() {
+  phase.value = 'config'
+  testWords.value = []
+  answers.value = []
+  currentIndex.value = 0
+  results.value = null
 }
 
 async function finish() {
