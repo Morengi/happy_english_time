@@ -37,6 +37,7 @@ const titleMap = {
   Lessons: 'Занятия',
   LessonDetail: 'Занятие',
   Messages: 'Сообщения',
+  VoiceRooms: 'Голосовые комнаты',
   Admin: 'Администрирование'
 }
 

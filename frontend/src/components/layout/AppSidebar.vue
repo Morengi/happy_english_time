@@ -58,6 +58,7 @@ const allItems = [
   { path: '/lessons', icon: '📝', label: 'Занятия', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
   { path: '/groups', icon: '👥', label: 'Группы', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
   { path: '/messages', icon: '💬', label: 'Сообщения', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+  { path: '/voice-rooms', icon: '🎤', label: 'Голосовые комнаты', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
   { path: '/profile', icon: '👤', label: 'Профиль', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
   { path: '/admin', icon: '⚙️', label: 'Администрирование', roles: ['ADMIN'] },
 ]
