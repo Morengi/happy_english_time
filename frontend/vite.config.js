@@ -3,8 +3,12 @@ import vue from '@vitejs/plugin-vue'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import { fileURLToPath, URL } from 'node:url'
 
-export default defineConfig({
-  plugins: [vue(), basicSsl()],
+export default defineConfig(({ command }) => ({
+  plugins: [
+    vue(),
+    // basicSsl только для локальной разработки (getUserMedia требует HTTPS на LAN)
+    ...(command === 'serve' ? [basicSsl()] : [])
+  ],
   define: {
     global: 'globalThis'
   },
@@ -48,4 +52,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))
