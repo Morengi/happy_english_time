@@ -52,6 +52,8 @@ public class SecurityConfig {
                 // which is needed for custom resource handlers (uploads, websocket).
                 .requestMatchers(new AntPathRequestMatcher("/uploads/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
+                // Standalone voice-rooms SPA static files served from Spring Boot resources
+                .requestMatchers(new AntPathRequestMatcher("/voice-rooms/**")).permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
             )

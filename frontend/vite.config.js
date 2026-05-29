@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), basicSsl()],
   define: {
     global: 'globalThis'
   },
@@ -23,6 +24,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    https: true,   // required for getUserMedia on non-localhost devices (phone, 2nd PC)
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
