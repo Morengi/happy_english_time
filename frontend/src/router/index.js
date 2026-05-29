@@ -21,6 +21,7 @@ const routes = [
       { path: 'lessons/:id', name: 'LessonDetail', component: () => import('@/views/LessonDetailView.vue') },
       { path: 'messages', name: 'Messages', component: () => import('@/views/MessagesView.vue') },
       { path: 'voice-rooms', name: 'VoiceRooms', component: () => import('@/views/VoiceRoomsView.vue') },
+      { path: 'voice-rooms/room/:id', name: 'VoiceRoom', component: () => import('@/views/VoiceRoomView.vue') },
       { path: 'admin', name: 'Admin', component: () => import('@/views/AdminView.vue'), meta: { role: 'ADMIN' } }
     ]
   },

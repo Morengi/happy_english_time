@@ -105,4 +105,13 @@ export const messageApi = {
   markAsRead: (senderId) => api.post(`/messages/read/${senderId}`)
 }
 
+export const voiceRoomApi = {
+  list:         ()   => api.get('/voice-rooms'),
+  create:       (d)  => api.post('/voice-rooms', d),
+  end:          (id) => api.delete(`/voice-rooms/${id}`),
+  participants: (id) => api.get(`/voice-rooms/${id}/participants`),
+  join:         (id) => api.post(`/voice-rooms/${id}/join`),
+  leave:        (id) => api.post(`/voice-rooms/${id}/leave`)
+}
+
 export default api
