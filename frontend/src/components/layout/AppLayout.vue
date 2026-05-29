@@ -39,6 +39,7 @@ onMounted(() => {
   if (auth.token) {
     chat.connect(auth.token)
     chat.fetchUnread()
+    chat.fetchUnreadBySender()
   }
 })
 

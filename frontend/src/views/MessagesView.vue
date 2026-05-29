@@ -41,6 +41,9 @@
             <div class="msg-contact__name">{{ contact.fullName }}</div>
             <div class="msg-contact__sub">@{{ contact.nickname }}</div>
           </div>
+          <span v-if="chat.unreadBySender[contact.id]" class="msg-contact__badge">
+            {{ chat.unreadBySender[contact.id] > 99 ? '99+' : chat.unreadBySender[contact.id] }}
+          </span>
         </div>
       </div>
     </div>
@@ -155,6 +158,7 @@ onMounted(async () => {
     const { data } = await messageApi.getContacts()
     contacts.value = data
   } catch {}
+  await chat.fetchUnreadBySender()
 })
 
 // ─── Select contact and open conversation ─────────────────────────────────────
@@ -165,6 +169,7 @@ async function selectContact(contact) {
   if (!contacts.value.find(c => c.id === contact.id)) {
     contacts.value.unshift(contact)
   }
+  chat.markContactRead(contact.id)
   await loadConversation(contact.id)
 }
 
@@ -331,6 +336,22 @@ function formatTime(dt) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &__badge {
+    flex-shrink: 0;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: $primary;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
   }
 }
 

@@ -102,6 +102,7 @@ export const messageApi = {
   getPrivate: (otherId) => api.get(`/messages/private/${otherId}`),
   getContacts: () => api.get('/messages/contacts'),
   getUnread: () => api.get('/messages/unread'),
+  getUnreadBySender: () => api.get('/messages/unread-by-sender'),
   markAsRead: (senderId) => api.post(`/messages/read/${senderId}`)
 }
 

@@ -24,6 +24,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Query("SELECT COUNT(m) FROM Message m WHERE m.receiver.id = :userId AND m.isRead = false")
     long countUnreadForUser(@Param("userId") Long userId);
 
+    @Query("SELECT m.sender.id, COUNT(m) FROM Message m WHERE m.receiver.id = :userId AND m.isRead = false GROUP BY m.sender.id")
+    List<Object[]> countUnreadPerSender(@Param("userId") Long userId);
+
     @Transactional
     @Modifying
     @Query("UPDATE Message m SET m.isRead = true WHERE m.receiver.id = :userId AND m.sender.id = :senderId")

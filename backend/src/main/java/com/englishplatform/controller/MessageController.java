@@ -45,4 +45,9 @@ public class MessageController {
     public ResponseEntity<Map<String, Long>> getUnreadCount(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(Map.of("count", messageService.countUnread(user)));
     }
+
+    @GetMapping("/unread-by-sender")
+    public ResponseEntity<Map<Long, Long>> getUnreadBySender(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(messageService.countUnreadPerSender(user));
+    }
 }

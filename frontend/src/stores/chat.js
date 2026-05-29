@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { messageApi } from '@/api'
 
 export const useChatStore = defineStore('chat', () => {
   const unreadCount = ref(0)
+  const unreadBySender = reactive({})   // senderId (number) → unread count
   const connected = ref(false)
 
   let stompClient = null
@@ -19,6 +20,19 @@ export const useChatStore = defineStore('chat', () => {
       const { data } = await messageApi.getUnread()
       unreadCount.value = data.count
     } catch {}
+  }
+
+  async function fetchUnreadBySender() {
+    try {
+      const { data } = await messageApi.getUnreadBySender()
+      // Clear and repopulate (keys are strings from JSON, convert to numbers)
+      Object.keys(unreadBySender).forEach(k => delete unreadBySender[k])
+      Object.entries(data).forEach(([k, v]) => { unreadBySender[Number(k)] = v })
+    } catch {}
+  }
+
+  function markContactRead(contactId) {
+    delete unreadBySender[contactId]
   }
 
   // ─── WebSocket connection ─────────────────────────────────────────────────────
@@ -39,6 +53,7 @@ export const useChatStore = defineStore('chat', () => {
           const msg = JSON.parse(frame.body)
           messageHandlers.forEach(h => h(msg))
           fetchUnread()
+          fetchUnreadBySender()
         })
 
         // Flush any group subscriptions requested before connection was ready
@@ -109,5 +124,9 @@ export const useChatStore = defineStore('chat', () => {
     return () => { if (stompSub) stompSub.unsubscribe() }
   }
 
-  return { unreadCount, connected, connect, disconnect, onMessage, subscribeToGroup, fetchUnread }
+  return {
+    unreadCount, unreadBySender, connected,
+    connect, disconnect, onMessage, subscribeToGroup,
+    fetchUnread, fetchUnreadBySender, markContactRead
+  }
 })

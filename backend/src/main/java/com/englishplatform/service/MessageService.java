@@ -98,4 +98,12 @@ public class MessageService {
     public long countUnread(User user) {
         return messageRepository.countUnreadForUser(user.getId());
     }
+
+    public Map<Long, Long> countUnreadPerSender(User user) {
+        Map<Long, Long> result = new HashMap<>();
+        for (Object[] row : messageRepository.countUnreadPerSender(user.getId())) {
+            result.put((Long) row[0], (Long) row[1]);
+        }
+        return result;
+    }
 }
