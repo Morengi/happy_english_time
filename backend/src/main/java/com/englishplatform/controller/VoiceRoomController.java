@@ -32,7 +32,7 @@ public class VoiceRoomController {
 
     /** Create a new room (TEACHER or ADMIN only). */
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('TEACHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ResponseEntity<VoiceRoomResponse> createRoom(
             @Valid @RequestBody VoiceRoomRequest req,
             @AuthenticationPrincipal User user) {

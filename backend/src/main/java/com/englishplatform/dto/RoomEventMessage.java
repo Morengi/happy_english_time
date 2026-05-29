@@ -13,6 +13,7 @@ public class RoomEventMessage {
     private String userNickname;
     private String userFullName;
     private String userAvatarUrl;
+    private String userRole;
 
     public RoomEventMessage() {}
 
@@ -33,4 +34,7 @@ public class RoomEventMessage {
 
     public String getUserAvatarUrl() { return userAvatarUrl; }
     public void setUserAvatarUrl(String userAvatarUrl) { this.userAvatarUrl = userAvatarUrl; }
+
+    public String getUserRole() { return userRole; }
+    public void setUserRole(String userRole) { this.userRole = userRole; }
 }

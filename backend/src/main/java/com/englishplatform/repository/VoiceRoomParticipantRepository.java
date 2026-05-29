@@ -22,6 +22,9 @@ public interface VoiceRoomParticipantRepository extends JpaRepository<VoiceRoomP
     /** Count current live participants. */
     long countByRoomAndLeftAtIsNull(VoiceRoom room);
 
+    /** Find the most recent participant record for a user in a room (active OR past). */
+    Optional<VoiceRoomParticipant> findFirstByRoomAndUserOrderByJoinedAtDesc(VoiceRoom room, User user);
+
     /** Mark all live participants as left when a room is ended. */
     @Modifying
     @Query("UPDATE VoiceRoomParticipant p SET p.leftAt = CURRENT_TIMESTAMP WHERE p.room = :room AND p.leftAt IS NULL")

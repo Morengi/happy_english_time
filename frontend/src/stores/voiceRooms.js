@@ -62,6 +62,7 @@ export const useVoiceRoomsStore = defineStore('voiceRooms', () => {
           nickname:  event.userNickname,
           fullName:  event.userFullName,
           avatarUrl: event.userAvatarUrl,
+          role:      event.userRole,
           joinedAt:  new Date().toISOString()
         })
       }
@@ -80,14 +81,33 @@ export const useVoiceRoomsStore = defineStore('voiceRooms', () => {
     }
   }
 
+  // Fetches the current participant list and merges with local state.
+  // Used as a fallback when a JOIN event may have been missed (e.g. during getUserMedia dialog).
+  async function refreshParticipants(roomId) {
+    try {
+      const { data } = await voiceRoomApi.participants(roomId)
+      data.forEach(p => {
+        if (!participants.value.find(existing => Number(existing.userId) === Number(p.userId))) {
+          participants.value.push(p)
+        }
+      })
+    } catch {}
+  }
+
+  // Called both when a NEW room is created and when an EXISTING room is updated
+  // (e.g. participant count changes after join/leave)
   function handleNewRoom(room) {
-    const exists = rooms.value.find(r => r.id === room.id)
-    if (!exists) rooms.value.push(room)
+    const idx = rooms.value.findIndex(r => r.id === room.id)
+    if (idx >= 0) {
+      rooms.value[idx] = room   // Update participantCount and any other changed fields
+    } else {
+      rooms.value.push(room)    // Newly created room
+    }
   }
 
   return {
     rooms, currentRoom, participants, loading, error,
     fetchRooms, createRoom, joinRoom, leaveRoom, endRoom,
-    handleParticipantEvent, handleNewRoom
+    handleParticipantEvent, handleNewRoom, refreshParticipants
   }
 })

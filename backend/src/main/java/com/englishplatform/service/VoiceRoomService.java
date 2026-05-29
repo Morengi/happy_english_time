@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,11 +85,19 @@ public class VoiceRoomService {
             }
         }
 
-        // Create or re-activate participant entry
-        participantRepository.findByRoomAndUserAndLeftAtIsNull(room, user).ifPresent(p -> {
-            // User already in room — no-op
-        });
-        if (participantRepository.findByRoomAndUserAndLeftAtIsNull(room, user).isEmpty()) {
+        // Re-activate an existing record (user rejoining after leave) or create a new one
+        Optional<VoiceRoomParticipant> existing =
+                participantRepository.findFirstByRoomAndUserOrderByJoinedAtDesc(room, user);
+        if (existing.isPresent()) {
+            VoiceRoomParticipant p = existing.get();
+            if (p.getLeftAt() != null) {
+                // User previously left — re-activate the record
+                p.setLeftAt(null);
+                p.setJoinedAt(java.time.LocalDateTime.now());
+                participantRepository.save(p);
+            }
+            // else: user is already active in the room — no-op
+        } else {
             VoiceRoomParticipant p = VoiceRoomParticipant.builder()
                     .room(room)
                     .user(user)
@@ -96,12 +105,12 @@ public class VoiceRoomService {
             participantRepository.save(p);
         }
 
-        List<VoiceParticipantResponse> participants = participantRepository
-                .findByRoomAndLeftAtIsNull(room).stream()
+        List<VoiceRoomParticipant> currentParticipants = participantRepository.findByRoomAndLeftAtIsNull(room);
+        List<VoiceParticipantResponse> participants = currentParticipants.stream()
                 .map(VoiceParticipantResponse::from)
                 .collect(Collectors.toList());
 
-        // Broadcast JOIN event
+        // Broadcast JOIN event to users inside the room
         RoomEventMessage event = new RoomEventMessage();
         event.setType("JOIN");
         event.setRoomId(roomId);
@@ -109,7 +118,12 @@ public class VoiceRoomService {
         event.setUserNickname(user.getNickname());
         event.setUserFullName(user.getFullName());
         event.setUserAvatarUrl(user.getAvatarUrl());
+        event.setUserRole(user.getRole() != null ? user.getRole().name() : null);
         messagingTemplate.convertAndSend("/topic/voice/" + roomId + "/events", event);
+
+        // Broadcast updated room (with new participantCount) to the rooms list page
+        messagingTemplate.convertAndSend("/topic/voice-rooms/list",
+                VoiceRoomResponse.from(room, currentParticipants.size()));
 
         return participants;
     }
@@ -125,7 +139,7 @@ public class VoiceRoomService {
                     participantRepository.save(p);
                 });
 
-        // Broadcast LEAVE event
+        // Broadcast LEAVE event to users inside the room
         RoomEventMessage event = new RoomEventMessage();
         event.setType("LEAVE");
         event.setRoomId(roomId);
@@ -134,6 +148,11 @@ public class VoiceRoomService {
         event.setUserFullName(user.getFullName());
         event.setUserAvatarUrl(user.getAvatarUrl());
         messagingTemplate.convertAndSend("/topic/voice/" + roomId + "/events", event);
+
+        // Broadcast updated room (with decremented participantCount) to the rooms list page
+        long remaining = participantRepository.countByRoomAndLeftAtIsNull(room);
+        messagingTemplate.convertAndSend("/topic/voice-rooms/list",
+                VoiceRoomResponse.from(room, (int) remaining));
     }
 
     // ── End ───────────────────────────────────────────────────────────────────
