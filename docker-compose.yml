@@ -51,14 +51,22 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN}
     ports:
-      - "${PORT:-80}:80"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
     networks:
       - app-network
 
 volumes:
   postgres_data:
   uploads_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   app-network:

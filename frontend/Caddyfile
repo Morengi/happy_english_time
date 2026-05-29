@@ -1,0 +1,23 @@
+{$DOMAIN} {
+    # API -> бэкенд
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # Загрузки (аватары, файлы уроков) -> бэкенд
+    handle /uploads/* {
+        reverse_proxy backend:8080
+    }
+
+    # WebSocket (SockJS) -> бэкенд
+    handle /ws* {
+        reverse_proxy backend:8080
+    }
+
+    # Всё остальное -> Vue SPA
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}
